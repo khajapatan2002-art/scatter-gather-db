@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="54fb24ac-12de-4ad1-a6a8-786274be2155" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="30e6b13a-2345-4f25-bedf-8a597cf9794d" >
+		<db:my-sql-connection host="iltdb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="53077bee-e133-42e2-bf1c-fc2cf98bba0f" >
+		<db:my-sql-connection host="iltdb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<flow name="scatter-gatherFlow" doc:id="84382ead-c63e-40b9-bd13-ff596c4b9b56" >
+		<http:listener doc:name="Listener" doc:id="e2428921-f229-44b6-8934-52cf03cacf19" config-ref="HTTP_Listener_config" path="/scatter"/>
+		<logger level="INFO" doc:name="Logger" doc:id="23b9ed4d-f2dd-4594-b7a3-55200f1cb0f8" message="start"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="92f6d595-ba4f-4c0b-bc61-9102c6ee35e4" >
+			<route >
+				<db:select doc:name="Select" doc:id="236e731a-3b22-4553-b566-95ac2bc34d20" config-ref="Database_Config1">
+					<db:sql ><![CDATA[select * from accounts where accountID = :syam]]></db:sql>
+					<db:input-parameters ><![CDATA[#[syam : attributes.queryParams.syam]]]></db:input-parameters>
+				</db:select>
+			</route>
+			<route >
+				<db:select doc:name="Select" doc:id="dbcba301-31d8-4600-9a27-929b09abd709" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from accounts where accountID = :khaja]]></db:sql>
+					<db:input-parameters ><![CDATA[#[khaja: attributes.queryParams.khaja]]]></db:input-parameters>
+				</db:select>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="370af616-d522-4c41-95ca-e3052305f7af" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0].payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c66ca596-2e4e-463e-b166-50a59694831c" message="end"/>
+	</flow>
+</mule>
